@@ -1,7 +1,10 @@
 import numpy
 from PIL import Image
+from scipy.signal import convolve2d
+
 import sys
 import argparse
+
 
 
 parser = argparse.ArgumentParser(description='This program modifies an image, it can make severals modifications in one run and this modifications will be made in order given by help eg. it will make inverse first and then rotation because inverse is in help before the rotation. You cannot specify the order of actions but you can run this program severals time with subset of actions you want to make in total to get desired efect.')
@@ -12,6 +15,10 @@ parser.add_argument('-g', '--gray', action='store_true', help='Make the image gr
 parser.add_argument('-d', '--darken', type=int,  help = "Make the image darker by given value - it multiples values in pixels - 10 is like 10 %% darker" )
 parser.add_argument('-l', '--lighten', type=int,  help = "Make the image lighter by given value - it multiples values in pixels - 10 is like 10 %% lighter")
 parser.add_argument('-f', '--flip', type=int, help = "Flip the image - insert 0 for vertical flip or 1 for horizontal")
+parser.add_argument('--relief', action='store_true', help='Make relief of the image.')
+parser.add_argument('--edges', action='store_true', help='Detect edges of the image.')
+parser.add_argument('--blur', action='store_true', help='Make the image blurry.')
+parser.add_argument('--sharpen', action='store_true', help='Make the image more sharp/=.')
 
 
 def inverse(imgArray):
@@ -37,6 +44,39 @@ def flip(imgArray,direction):
 	if(direction == 1):
 		return imgArray[::-1,...]
 	return imgArray[:,::-1]
+
+def imgConvolve(imgArray, kernel):
+	r = convolve2d(imgArray[:,:,0], kernel, mode='same')
+	g = convolve2d(imgArray[:,:,1], kernel, mode='same')
+	b = convolve2d(imgArray[:,:,2], kernel, mode='same')
+	return numpy.clip(numpy.dstack([r, g, b]),0,255).astype(numpy.uint8)
+
+def relief(imgArray):
+	kernel = numpy.array([[ -2, -1, 0 ],
+                          [ -1,  1, 1 ],
+                          [  0,  1, 2 ]])
+	return imgConvolve(imgArray,kernel)
+
+def detectEdges(imgArray):
+	kernel = numpy.array([[ -1, -1, -1 ],
+                          [ -1,  8, -1 ],
+                          [ -1, -1, -1 ]])
+	return imgConvolve(imgArray,kernel)
+
+
+def blur(imgArray):
+	kernel = numpy.array([[ 1, 1, 1 ],
+                          [ 1, 1, 1 ],
+                          [ 1, 1, 1 ]])/9
+	return imgConvolve(imgArray,kernel)
+
+
+
+def sharpen(imgArray):
+	kernel = numpy.array([[ 0,-1, 0 ],
+                          [-1, 5,-1 ],
+                          [ 0,-1, 0 ]])
+	return imgConvolve(imgArray,kernel)
 
 
 ''' 
@@ -64,6 +104,11 @@ if __name__ == "__main__":
 	if(flipFlag):
 		flipDirection = args['flip']%2
 
+	reliefFlag = args['relief']
+	edgeFlag = args['edges']
+	blurFlag = args['blur']
+	sharpFlag = args['sharpen']
+
 	# extract array from input image
 
 	imgArray = numpy.asarray(Image.open(fileName))
@@ -87,6 +132,20 @@ if __name__ == "__main__":
 
 	if(flipFlag):
 		imgArray = flip(imgArray,flipDirection)
+
+	if(reliefFlag):
+		imgArray = relief(imgArray)
+
+	if(edgeFlag):		
+		imgArray = detectEdges(imgArray)
+
+	if(blurFlag):
+		imgArray = blur(imgArray)
+
+	if(sharpFlag):
+		imgArray = sharpen(imgArray)
+
+
 
 	# process the modified array
 	imgOutput = Image.fromarray(imgArray)
