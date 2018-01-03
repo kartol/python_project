@@ -18,7 +18,8 @@ parser.add_argument('-f', '--flip', type=int, help = "Flip the image - insert 0 
 parser.add_argument('--relief', action='store_true', help='Make relief of the image.')
 parser.add_argument('--edges', action='store_true', help='Detect edges of the image.')
 parser.add_argument('--blur', action='store_true', help='Make the image blurry.')
-parser.add_argument('--sharpen', action='store_true', help='Make the image more sharp/=.')
+parser.add_argument('--sharpen', action='store_true', help='Make the image more sharp.')
+parser.add_argument('-o', '--output', help='File name of output image - use a file with *.png', default='output.jpg')
 
 
 def inverse(imgArray):
@@ -109,6 +110,8 @@ if __name__ == "__main__":
 	blurFlag = args['blur']
 	sharpFlag = args['sharpen']
 
+	outputName = args['output']
+
 	# extract array from input image
 
 	imgArray = numpy.asarray(Image.open(fileName))
@@ -147,8 +150,8 @@ if __name__ == "__main__":
 
 
 
-	# process the modified array
+	# save modified array
 	imgOutput = Image.fromarray(imgArray)
-	imgOutput.show()
+	imgOutput.save(outputName)
 
 
