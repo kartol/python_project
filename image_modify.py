@@ -11,6 +11,8 @@ parser.add_argument('-r', '--rotate', type=int, help='Rotate the image to the le
 parser.add_argument('-g', '--gray', action='store_true', help='Make the image gray.')
 parser.add_argument('-d', '--darken', type=int,  help = "Make the image darker by given value - it multiples values in pixels - 10 is like 10 %% darker" )
 parser.add_argument('-l', '--lighten', type=int,  help = "Make the image lighter by given value - it multiples values in pixels - 10 is like 10 %% lighter")
+parser.add_argument('-f', '--flip', type=int, help = "Flip the image - insert 0 for vertical flip or 1 for horizontal")
+
 
 def inverse(imgArray):
 	return 255 - imgArray
@@ -30,6 +32,11 @@ def darken(imgArray,value):
 
 def lighten(imgArray,value):
 	return numpy.clip(( (1 + value/100) * imgArray),0,255).astype(numpy.uint8)
+
+def flip(imgArray,direction):
+	if(direction == 1):
+		return imgArray[::-1,...]
+	return imgArray[:,::-1]
 
 
 ''' 
@@ -53,6 +60,10 @@ if __name__ == "__main__":
 	lightenFlag = True if args['lighten'] else False
 	lightenScale = args['lighten']
 
+	flipFlag = True if not ( args['flip'] is None ) else False
+	if(flipFlag):
+		flipDirection = args['flip']%2
+
 	# extract array from input image
 
 	imgArray = numpy.asarray(Image.open(fileName))
@@ -74,6 +85,8 @@ if __name__ == "__main__":
 	if(lightenFlag):
 		imgArray = lighten(imgArray,lightenScale)
 
+	if(flipFlag):
+		imgArray = flip(imgArray,flipDirection)
 
 	# process the modified array
 	imgOutput = Image.fromarray(imgArray)
