@@ -1,6 +1,5 @@
 import numpy
 from PIL import Image
-from scipy.signal import convolve2d
 
 import sys
 import argparse
@@ -46,10 +45,17 @@ def flip(imgArray,direction):
 		return imgArray[::-1,...]
 	return imgArray[:,::-1]
 
+# custom conovolve2d - main idea from https://stackoverflow.com/questions/43086557/convolve2d-just-by-using-numpy
+def customConvolve2d(array, kernel):
+	array = numpy.pad(array,(1,1),'constant')
+	return (kernel[0][0] * array[0:-2,0:-2] + kernel[0][1] * array[0:-2,1:-1] + kernel[0][2] * array[0:-2,2:] +
+   		    kernel[1][0] * array[1:-1,0:-2] + kernel[1][1] * array[1:-1,1:-1] + kernel[1][2] * array[1:-1,2:] +
+            kernel[2][0] * array[2:  ,0:-2] + kernel[2][1] * array[2:  ,1:-1] + kernel[2][2] * array[2:  ,2:])
+
 def imgConvolve(imgArray, kernel):
-	r = convolve2d(imgArray[:,:,0], kernel, mode='same')
-	g = convolve2d(imgArray[:,:,1], kernel, mode='same')
-	b = convolve2d(imgArray[:,:,2], kernel, mode='same')
+	r = customConvolve2d(imgArray[:,:,0].astype(numpy.uint32),kernel)
+	g = customConvolve2d(imgArray[:,:,1].astype(numpy.uint32),kernel)
+	b = customConvolve2d(imgArray[:,:,2].astype(numpy.uint32),kernel)
 	return numpy.clip(numpy.dstack([r, g, b]),0,255).astype(numpy.uint8)
 
 def relief(imgArray):
